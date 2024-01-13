@@ -1,10 +1,12 @@
 pub mod mod_files;
 pub mod mods;
+pub mod nexus;
 
 use std::sync::Arc;
 
 use mod_files::ModFiles;
 use mods::Mods;
+use nexus::Nexus;
 use raxios::{map_string, Raxios, RaxiosConfig};
 
 pub type NexusApiResult<T> = anyhow::Result<T>;
@@ -14,6 +16,7 @@ const NEXUS_API_BASE_URL: &'static str = "https://api.nexusmods.com/";
 pub struct NexusApi {
     pub mods: Mods,
     pub mod_files: ModFiles,
+    pub nexus: Nexus,
 }
 
 impl NexusApi {
@@ -34,7 +37,12 @@ impl NexusApi {
         let raxios = Arc::new(raxios);
         let mods = Mods::from(&raxios);
         let mod_files = ModFiles::from(&raxios);
+        let nexus = Nexus::from(&raxios);
 
-        Self { mods, mod_files }
+        Self {
+            mods,
+            mod_files,
+            nexus,
+        }
     }
 }
