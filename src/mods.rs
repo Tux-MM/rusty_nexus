@@ -1,7 +1,7 @@
 pub mod models;
 
-use models::{ModEndorsementResult, ModInfoResponse, Period, UpdatedModInfo};
 use crate::NexusApiResult;
+use models::{ModEndorsementResult, ModInfoResponse, Period, UpdatedModInfo};
 use raxios::{map_string, Raxios, RaxiosOptions};
 use std::{collections::HashMap, sync::Arc};
 

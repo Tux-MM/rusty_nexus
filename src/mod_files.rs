@@ -1,6 +1,6 @@
 pub mod models;
 
-use models::{GameFileInfo, ListFilesResponse, ModFileCategory, DownloadLink};
+use models::{DownloadLink, GameFileInfo, ListFilesResponse, ModFileCategory};
 use raxios::{map_string, Raxios, RaxiosOptions};
 use std::sync::Arc;
 

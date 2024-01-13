@@ -79,5 +79,5 @@ pub struct GameFileUpdatesInfo {
 pub struct DownloadLink {
     pub name: String,
     pub short_name: String,
-    pub URI: String
+    pub URI: String,
 }
