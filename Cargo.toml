@@ -12,8 +12,8 @@ description = "Rust wrapper for the official Nexus Mods API"
 
 [dependencies]
 raxios = {version = "0.5.2"}
-serde = {version = "1.0.195", features = ["derive"]}
-serde_json = {version = "1.0.111"}
+serde = {version = "1.0.196", features = ["derive"]}
+serde_json = {version = "1.0.113"}
 anyhow = {version = "1.0.79"}
 
 [dev-dependencies]
