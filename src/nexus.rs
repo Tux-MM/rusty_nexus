@@ -99,10 +99,9 @@ mod tests {
                 domain_name: "skyrimspecialedition".into(),
                 mod_id: 1
             }),
-            true,
-            "{resp:?}"
+            true
         );
         let resp = nexus_api.nexus.untrack_mod("skyrimspecialedition", 1).await;
-        assert_eq!(resp.is_ok(), true, "{resp:?}");
+        assert_eq!(resp.is_ok(), true);
     }
 }

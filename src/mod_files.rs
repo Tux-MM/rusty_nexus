@@ -2,7 +2,7 @@ pub mod models;
 
 use models::{DownloadLink, GameFileInfo, ListFilesResponse, ModFileCategory};
 use reqwest::Client;
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use crate::{NexusApiResult, NEXUS_API_BASE_URL};
 
@@ -25,13 +25,17 @@ impl ModFiles {
         mod_id: u32,
         category: Option<ModFileCategory>,
     ) -> NexusApiResult<ListFilesResponse> {
-        let mut url = format!("{NEXUS_API_BASE_URL}/v1/games/{game_name}/mods/{mod_id}/files.json");
+        let url = format!("{NEXUS_API_BASE_URL}/v1/games/{game_name}/mods/{mod_id}/files.json");
+        let mut qdata = HashMap::new();
+
         if category.is_some() {
-            url.push_str(format!("?category={}", category.unwrap()).as_str());
+            qdata.insert("category",category.unwrap().to_string());
         }
+
         let res = self
             .raxios
             .get(url)
+            .query(&qdata)
             .send()
             .await?
             .json::<ListFilesResponse>()
@@ -117,7 +121,7 @@ mod tests {
             .list_mod_files_by_mod_id("valheim", 387, Some(ModFileCategory::Main))
             .await;
 
-        assert_ne!(true, res_no_param.is_err(), "{res_no_param:?}");
+        assert_ne!(true, res_no_param.is_err());
         assert_ne!(true, res_with_param.is_err());
     }
 
