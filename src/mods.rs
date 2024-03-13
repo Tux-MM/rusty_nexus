@@ -1,6 +1,6 @@
 pub mod models;
 
-use crate::{NexusApiResult,NEXUS_API_BASE_URL};
+use crate::{NexusApiResult, NEXUS_API_BASE_URL};
 use models::{ModEndorsementResult, ModInfoResponse, Period, UpdatedModInfo};
 use reqwest::Client;
 use std::{collections::HashMap, sync::Arc};
@@ -43,7 +43,8 @@ impl Mods {
         game_name: &str,
         mod_id: u32,
     ) -> NexusApiResult<HashMap<String, Vec<String>>> {
-        let url = format!("{NEXUS_API_BASE_URL}/v1/games/{game_name}/mods/{mod_id}/changelogs.json");
+        let url =
+            format!("{NEXUS_API_BASE_URL}/v1/games/{game_name}/mods/{mod_id}/changelogs.json");
 
         let response = self
             .raxios

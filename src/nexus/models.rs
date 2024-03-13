@@ -21,5 +21,5 @@ pub type TrackedModsGetResponse = Vec<TrackedModsCommon>;
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Message {
-    pub message: String
+    pub message: String,
 }
