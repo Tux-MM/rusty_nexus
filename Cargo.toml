@@ -13,7 +13,7 @@ description = "Rust wrapper for the official Nexus Mods API"
 [dependencies]
 serde = { version = "1.0.197", features = ["derive"] }
 serde_json = { version = "1.0.114" }
-anyhow = { version = "1.0.80" }
+anyhow = { version = "1.0.81" }
 reqwest = { version = "0.11.26", features = ["json"] }
 
 [dev-dependencies]
