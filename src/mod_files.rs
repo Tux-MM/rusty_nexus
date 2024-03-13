@@ -29,7 +29,7 @@ impl ModFiles {
         let mut qdata = HashMap::new();
 
         if category.is_some() {
-            qdata.insert("category",category.unwrap().to_string());
+            qdata.insert("category", category.unwrap().to_string());
         }
 
         let res = self
@@ -63,37 +63,24 @@ impl ModFiles {
         return Ok(res);
     }
 
-    pub async fn get_download_link_by_file_id_premium(
-        &self,
-        game_name: &str,
-        mod_id: u32,
-        file_id: u32,
-    ) -> NexusApiResult<Vec<DownloadLink>> {
-        let url = format!("{NEXUS_API_BASE_URL}/v1/games/{game_name}/mods/{mod_id}/files/{file_id}/download_link.json");
-
-        let res = self
-            .raxios
-            .get(url)
-            .send()
-            .await?
-            .json::<Vec<DownloadLink>>()
-            .await?;
-        return Ok(res);
-    }
-
     pub async fn get_download_link_by_file_id(
         &self,
         game_name: &str,
         mod_id: u32,
         file_id: u32,
-        key: String,
-        expires: String,
+        non_prem: Option<(String, String)>,
     ) -> NexusApiResult<Vec<DownloadLink>> {
-        let url = format!("{NEXUS_API_BASE_URL}/v1/games/{game_name}/mods/{mod_id}/files/{file_id}/download_link.json?key={key}&expires={expires}");
-
+        let url = format!("{NEXUS_API_BASE_URL}/v1/games/{game_name}/mods/{mod_id}/files/{file_id}/download_link.json");
+        let mut data = HashMap::new();
+        if non_prem.is_some() {
+            let (key, expire) = non_prem.unwrap();
+            data.insert("key", key);
+            data.insert("expires", expire);
+        }
         let res = self
             .raxios
             .get(url)
+            .query(&data)
             .send()
             .await?
             .json::<Vec<DownloadLink>>()
@@ -135,5 +122,18 @@ mod tests {
             .await;
 
         assert_ne!(true, res.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_get_download_link() {
+        let api_key: &str = dotenv_codegen::dotenv!("NEXUS_API_KEY");
+        let nexus_api = NexusApi::new(api_key);
+        let res = nexus_api
+            .mod_files
+            .get_download_link_by_file_id("skyrimspecialedition", 42057, 168776, None)
+            .await;
+        let is_prem = nexus_api.nexus.validate().await.unwrap().is_premium;
+
+        assert_ne!(is_prem, res.is_err(), "{res:?}");
     }
 }
