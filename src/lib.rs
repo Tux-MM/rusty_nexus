@@ -7,11 +7,11 @@ use std::sync::Arc;
 use mod_files::ModFiles;
 use mods::Mods;
 use nexus::Nexus;
-use raxios::{map_string, Raxios, RaxiosConfig};
+use reqwest::{header::HeaderMap, ClientBuilder};
 
 pub type NexusApiResult<T> = anyhow::Result<T>;
 
-const NEXUS_API_BASE_URL: &'static str = "https://api.nexusmods.com/";
+const NEXUS_API_BASE_URL: &'static str = "https://api.nexusmods.com";
 
 pub struct NexusApi {
     pub mods: Mods,
@@ -21,18 +21,14 @@ pub struct NexusApi {
 
 impl NexusApi {
     pub fn new(api_key: &str) -> Self {
-        let default_headers = map_string! {
-            apikey : api_key
-        };
+        let mut def_headers = HeaderMap::new();
+        def_headers.insert("apikey", api_key.parse().unwrap());
 
-        let raxios = Raxios::new(
-            NEXUS_API_BASE_URL,
-            Some(RaxiosConfig {
-                headers: Some(default_headers),
-                ..Default::default()
-            }),
-        )
-        .unwrap();
+        let raxios = ClientBuilder::new()
+            .default_headers(def_headers)
+            .user_agent("RUSTY_NEXUS/1.0")
+            .build()
+            .unwrap();
 
         let raxios = Arc::new(raxios);
         let mods = Mods::from(&raxios);

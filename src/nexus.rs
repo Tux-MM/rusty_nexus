@@ -1,16 +1,16 @@
 pub mod models;
 
 use self::models::{Message, TrackedModsGetResponse, ValidateResponse};
-use crate::NexusApiResult;
-use raxios::{map_string, ContentType, Raxios, RaxiosOptions};
+use crate::{NexusApiResult, NEXUS_API_BASE_URL};
+use reqwest::Client;
 use std::{collections::HashMap, sync::Arc};
 
 pub struct Nexus {
-    raxios: Arc<Raxios>,
+    raxios: Arc<Client>,
 }
 
-impl From<&Arc<Raxios>> for Nexus {
-    fn from(raxios: &Arc<Raxios>) -> Self {
+impl From<&Arc<Client>> for Nexus {
+    fn from(raxios: &Arc<Client>) -> Self {
         Self {
             raxios: raxios.clone(),
         }
@@ -19,49 +19,60 @@ impl From<&Arc<Raxios>> for Nexus {
 
 impl Nexus {
     pub async fn validate(&self) -> NexusApiResult<ValidateResponse> {
-        let url = "v1/users/validate.json";
-        let resp = self.raxios.get::<ValidateResponse>(url, None).await?;
-        Ok(resp.body.unwrap())
+        let url = format!("{NEXUS_API_BASE_URL}/v1/users/validate.json");
+        let resp = self
+            .raxios
+            .get(url)
+            .send()
+            .await?
+            .json::<ValidateResponse>()
+            .await?;
+        Ok(resp)
     }
 
     pub async fn tracked_mods(&self) -> NexusApiResult<TrackedModsGetResponse> {
-        let url = "v1/user/tracked_mods.json";
-        let resp = self.raxios.get::<TrackedModsGetResponse>(url, None).await?;
-        Ok(resp.body.unwrap())
+        let url = format!("{NEXUS_API_BASE_URL}/v1/user/tracked_mods.json");
+        let resp = self
+            .raxios
+            .get(url)
+            .send()
+            .await?
+            .json::<TrackedModsGetResponse>()
+            .await?;
+        Ok(resp)
     }
 
     pub async fn track_mod(&self, game: &str, mod_id: u32) -> NexusApiResult<Message> {
-        let url = format!("v1/user/tracked_mods.json?domain_name={game}");
-        let data = map_string! {mod_id : mod_id};
+        let url = format!("{NEXUS_API_BASE_URL}/v1/user/tracked_mods.json");
+        let mut form_data = HashMap::new();
+        form_data.insert("domain_name", game);
+        let mut data = HashMap::new();
+        data.insert("mod_id", mod_id);
         let res = self
             .raxios
-            .post::<Message, HashMap<String, String>>(
-                &url,
-                Some(data),
-                Some(RaxiosOptions {
-                    content_type: Some(ContentType::UrlEncoded),
-                    ..Default::default()
-                }),
-            )
+            .post(&url)
+            .query(&form_data)
+            .form(&data)
+            .send()
+            .await?
+            .json::<Message>()
             .await?;
-        Ok(res.body.unwrap())
+        Ok(res)
     }
 
     pub async fn untrack_mod(&self, game: &str, mod_id: u32) -> NexusApiResult<Message> {
-        let url = format!("v1/user/tracked_mods.json?domain_name={game}");
-        let data = map_string! {mod_id : mod_id};
+        let url = format!("{NEXUS_API_BASE_URL}/v1/user/tracked_mods.json?domain_name={game}");
+        let mut data = HashMap::new();
+        data.insert("mod_id", mod_id);
         let res = self
             .raxios
-            .delete::<HashMap<String, String>, Message>(
-                &url,
-                Some(data),
-                Some(RaxiosOptions {
-                    content_type: Some(ContentType::UrlEncoded),
-                    ..Default::default()
-                }),
-            )
+            .delete(url)
+            .json(&data)
+            .send()
+            .await?
+            .json::<Message>()
             .await?;
-        Ok(res.body.unwrap())
+        Ok(res)
     }
 }
 

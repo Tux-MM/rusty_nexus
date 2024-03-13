@@ -1,16 +1,16 @@
 pub mod models;
 
-use crate::NexusApiResult;
+use crate::{NexusApiResult,NEXUS_API_BASE_URL};
 use models::{ModEndorsementResult, ModInfoResponse, Period, UpdatedModInfo};
-use raxios::{map_string, Raxios, RaxiosOptions};
+use reqwest::Client;
 use std::{collections::HashMap, sync::Arc};
 
 pub struct Mods {
-    raxios: Arc<Raxios>,
+    raxios: Arc<Client>,
 }
 
-impl From<&Arc<Raxios>> for Mods {
-    fn from(raxios: &Arc<Raxios>) -> Self {
+impl From<&Arc<Client>> for Mods {
+    fn from(raxios: &Arc<Client>) -> Self {
         Self {
             raxios: raxios.clone(),
         }
@@ -23,22 +23,19 @@ impl Mods {
         period: Period,
         game_name: &str,
     ) -> NexusApiResult<Vec<UpdatedModInfo>> {
-        let url = format!("/v1/games/{game_name}/mods/updated.json");
+        let url = format!("{NEXUS_API_BASE_URL}/v1/games/{game_name}/mods/updated.json");
 
-        period.to_string();
-
+        let mut data = HashMap::new();
+        data.insert("period", period.to_string());
         let to_return = self
             .raxios
-            .get::<Vec<UpdatedModInfo>>(
-                &url,
-                Some(RaxiosOptions {
-                    params: Some(map_string! {period : period}),
-                    ..Default::default()
-                }),
-            )
+            .get(url)
+            .json(&data)
+            .send()
+            .await?
+            .json::<Vec<UpdatedModInfo>>()
             .await?;
-
-        Ok(to_return.body.unwrap())
+        Ok(to_return)
     }
 
     pub async fn get_changelog_by_mod_id(
@@ -46,46 +43,67 @@ impl Mods {
         game_name: &str,
         mod_id: u32,
     ) -> NexusApiResult<HashMap<String, Vec<String>>> {
-        let url = format!("/v1/games/{game_name}/mods/{mod_id}/changelogs.json");
+        let url = format!("{NEXUS_API_BASE_URL}/v1/games/{game_name}/mods/{mod_id}/changelogs.json");
 
         let response = self
             .raxios
-            .get::<HashMap<String, Vec<String>>>(&url, None)
+            .get(url)
+            .send()
+            .await?
+            .json::<HashMap<String, Vec<String>>>()
             .await?;
 
-        return Ok(response.body.unwrap());
+        return Ok(response);
     }
 
     pub async fn get_lastest_10_mods_by_game(
         &self,
         game_name: &str,
     ) -> NexusApiResult<Vec<ModInfoResponse>> {
-        let url = format!("/v1/games/{game_name}/mods/latest_added.json");
+        let url = format!("{NEXUS_API_BASE_URL}/v1/games/{game_name}/mods/latest_added.json");
 
-        let response = self.raxios.get::<Vec<ModInfoResponse>>(&url, None).await?;
+        let response = self
+            .raxios
+            .get(url)
+            .send()
+            .await?
+            .json::<Vec<ModInfoResponse>>()
+            .await?;
 
-        return Ok(response.body.unwrap());
+        return Ok(response);
     }
 
     pub async fn get_latest_10_updated_mods_by_game(
         &self,
         game_name: &str,
     ) -> NexusApiResult<Vec<ModInfoResponse>> {
-        let url = format!("/v1/games/{game_name}/mods/latest_updated.json");
+        let url = format!("{NEXUS_API_BASE_URL}/v1/games/{game_name}/mods/latest_updated.json");
 
-        let res = self.raxios.get::<Vec<ModInfoResponse>>(&url, None).await?;
+        let res = self
+            .raxios
+            .get(url)
+            .send()
+            .await?
+            .json::<Vec<ModInfoResponse>>()
+            .await?;
 
-        return Ok(res.body.unwrap());
+        return Ok(res);
     }
 
     pub async fn get_top_10_trending_mods_by_game(
         &self,
         game_name: &str,
     ) -> NexusApiResult<Vec<ModInfoResponse>> {
-        let url = format!("v1/games/{game_name}/mods/trending.json");
-        let response = self.raxios.get::<Vec<ModInfoResponse>>(&url, None).await?;
+        let url = format!("{NEXUS_API_BASE_URL}/v1/games/{game_name}/mods/trending.json");
+        let response = self
+            .raxios
+            .get(url)
+            .send()
+            .await?
+            .json::<Vec<ModInfoResponse>>()
+            .await?;
 
-        return Ok(response.body.unwrap());
+        return Ok(response);
     }
 
     pub async fn get_mod_info_for_game(
@@ -93,10 +111,16 @@ impl Mods {
         mod_id: u32,
         game_name: &str,
     ) -> NexusApiResult<ModInfoResponse> {
-        let url = format!("v1/games/{game_name}/mods/{mod_id}.json");
-        let response = self.raxios.get::<ModInfoResponse>(&url, None).await?;
+        let url = format!("{NEXUS_API_BASE_URL}/v1/games/{game_name}/mods/{mod_id}.json");
+        let response = self
+            .raxios
+            .get(url)
+            .send()
+            .await?
+            .json::<ModInfoResponse>()
+            .await?;
 
-        return Ok(response.body.unwrap());
+        return Ok(response);
     }
 
     pub async fn endorse_mod_by_mod_id(
@@ -105,22 +129,20 @@ impl Mods {
         mod_id: u32,
         mod_version: &str,
     ) -> NexusApiResult<ModEndorsementResult> {
-        let url = format!("v1/games/{game_name}/mods/{mod_id}/endorse.json");
-        let data = map_string! {version : mod_version};
+        let url = format!("{NEXUS_API_BASE_URL}/v1/games/{game_name}/mods/{mod_id}/endorse.json");
+        let mut data = HashMap::new();
+        data.insert("version", mod_version);
 
         let response = self
             .raxios
-            .post::<ModEndorsementResult, HashMap<String, String>>(
-                &url,
-                Some(data),
-                Some(RaxiosOptions {
-                    content_type: Some(raxios::ContentType::UrlEncoded),
-                    ..Default::default()
-                }),
-            )
+            .post(url)
+            .json(&data)
+            .send()
+            .await?
+            .json::<ModEndorsementResult>()
             .await?;
 
-        return Ok(response.body.unwrap());
+        return Ok(response);
     }
 
     pub async fn remove_mod_endorsement_by_mod_id(
@@ -129,21 +151,19 @@ impl Mods {
         mod_id: u32,
         mod_version: &str,
     ) -> NexusApiResult<ModEndorsementResult> {
-        let url = format!("v1/games/{game_name}/mods/{mod_id}/abstain.json");
-        let data = map_string! {version : mod_version};
+        let url = format!("{NEXUS_API_BASE_URL}/v1/games/{game_name}/mods/{mod_id}/abstain.json");
+        let mut data = HashMap::new();
+        data.insert("version", mod_version);
         let res = self
             .raxios
-            .post::<ModEndorsementResult, HashMap<String, String>>(
-                &url,
-                Some(data),
-                Some(RaxiosOptions {
-                    content_type: Some(raxios::ContentType::UrlEncoded),
-                    ..Default::default()
-                }),
-            )
+            .post(url)
+            .json(&data)
+            .send()
+            .await?
+            .json::<ModEndorsementResult>()
             .await?;
 
-        return Ok(res.body.unwrap());
+        return Ok(res);
     }
 }
 

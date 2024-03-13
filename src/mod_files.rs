@@ -1,17 +1,17 @@
 pub mod models;
 
 use models::{DownloadLink, GameFileInfo, ListFilesResponse, ModFileCategory};
-use raxios::{map_string, Raxios, RaxiosOptions};
+use reqwest::Client;
 use std::sync::Arc;
 
-use crate::NexusApiResult;
+use crate::{NexusApiResult, NEXUS_API_BASE_URL};
 
 pub struct ModFiles {
-    raxios: Arc<Raxios>,
+    raxios: Arc<Client>,
 }
 
-impl From<&Arc<Raxios>> for ModFiles {
-    fn from(raxios: &Arc<Raxios>) -> Self {
+impl From<&Arc<Client>> for ModFiles {
+    fn from(raxios: &Arc<Client>) -> Self {
         Self {
             raxios: raxios.clone(),
         }
@@ -25,16 +25,19 @@ impl ModFiles {
         mod_id: u32,
         category: Option<ModFileCategory>,
     ) -> NexusApiResult<ListFilesResponse> {
-        let url = format!("v1/games/{game_name}/mods/{mod_id}/files.json");
-        let options: Option<RaxiosOptions> = category.map(|c| {
-            return RaxiosOptions {
-                params: Some(map_string! {category: c}),
-                ..Default::default()
-            };
-        });
-        let res = self.raxios.get::<ListFilesResponse>(&url, options).await?;
+        let mut url = format!("{NEXUS_API_BASE_URL}/v1/games/{game_name}/mods/{mod_id}/files.json");
+        if category.is_some() {
+            url.push_str(format!("?category={}", category.unwrap()).as_str());
+        }
+        let res = self
+            .raxios
+            .get(url)
+            .send()
+            .await?
+            .json::<ListFilesResponse>()
+            .await?;
 
-        return Ok(res.body.unwrap());
+        return Ok(res);
     }
 
     pub async fn view_mod_file_by_id(
@@ -43,10 +46,17 @@ impl ModFiles {
         mod_id: u32,
         file_id: u32,
     ) -> NexusApiResult<GameFileInfo> {
-        let url = format!("v1/games/{game_name}/mods/{mod_id}/files/{file_id}.json");
-        let res = self.raxios.get::<GameFileInfo>(&url, None).await?;
+        let url =
+            format!("{NEXUS_API_BASE_URL}/v1/games/{game_name}/mods/{mod_id}/files/{file_id}.json");
+        let res = self
+            .raxios
+            .get(url)
+            .send()
+            .await?
+            .json::<GameFileInfo>()
+            .await?;
 
-        return Ok(res.body.unwrap());
+        return Ok(res);
     }
 
     pub async fn get_download_link_by_file_id_premium(
@@ -55,10 +65,16 @@ impl ModFiles {
         mod_id: u32,
         file_id: u32,
     ) -> NexusApiResult<Vec<DownloadLink>> {
-        let url = format!("v1/games/{game_name}/mods/{mod_id}/files/{file_id}/download_link.json");
+        let url = format!("{NEXUS_API_BASE_URL}/v1/games/{game_name}/mods/{mod_id}/files/{file_id}/download_link.json");
 
-        let res = self.raxios.get::<Vec<DownloadLink>>(&url, None).await?;
-        return Ok(res.body.unwrap());
+        let res = self
+            .raxios
+            .get(url)
+            .send()
+            .await?
+            .json::<Vec<DownloadLink>>()
+            .await?;
+        return Ok(res);
     }
 
     pub async fn get_download_link_by_file_id(
@@ -69,10 +85,16 @@ impl ModFiles {
         key: String,
         expires: String,
     ) -> NexusApiResult<Vec<DownloadLink>> {
-        let url = format!("v1/games/{game_name}/mods/{mod_id}/files/{file_id}/download_link.json?key={key}&expires={expires}");
+        let url = format!("{NEXUS_API_BASE_URL}/v1/games/{game_name}/mods/{mod_id}/files/{file_id}/download_link.json?key={key}&expires={expires}");
 
-        let res = self.raxios.get::<Vec<DownloadLink>>(&url, None).await?;
-        return Ok(res.body.unwrap());
+        let res = self
+            .raxios
+            .get(url)
+            .send()
+            .await?
+            .json::<Vec<DownloadLink>>()
+            .await?;
+        return Ok(res);
     }
 }
 
@@ -95,7 +117,7 @@ mod tests {
             .list_mod_files_by_mod_id("valheim", 387, Some(ModFileCategory::Main))
             .await;
 
-        assert_ne!(true, res_no_param.is_err());
+        assert_ne!(true, res_no_param.is_err(), "{res_no_param:?}");
         assert_ne!(true, res_with_param.is_err());
     }
 
