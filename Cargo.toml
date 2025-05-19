@@ -11,12 +11,12 @@ description = "Rust wrapper for the official Nexus Mods API"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-serde = { version = "1.0.217", features = ["derive"] }
-serde_json = { version = "1.0.134" }
-anyhow = { version = "1.0.95" }
-reqwest = { version = "0.12.12", features = ["json"] }
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = { version = "1.0.140" }
+anyhow = { version = "1.0.98" }
+reqwest = { version = "0.12.15", features = ["json"] }
 
 [dev-dependencies]
-tokio = { version = "1.42.0", features = ["test-util", "macros"] }
+tokio = { version = "1.45.0", features = ["test-util", "macros"] }
 dotenv = { version = "0.15.0" }
 dotenv_codegen = { version = "0.15.0" }
